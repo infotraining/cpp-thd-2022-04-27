@@ -4,7 +4,7 @@
 
 * https://infotraining.bitbucket.io/cpp-thd
 
-## Środowisko (3 opcje do wyboru)
+## Środowisko (2 opcje do wyboru)
 
   1. Konfiguracja lokalna
 
