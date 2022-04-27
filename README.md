@@ -1,5 +1,9 @@
 # Szkolenie - Programowanie wielowątkowe w C++ #
 
+## LiveShare
+
+* https://prod.liveshare.vsengsaas.visualstudio.com/join?C5CD88F9B1FA59CC547B812C28FC964474F5
+
 ## Dokumentacja + slajdy
 
 * https://infotraining.bitbucket.io/cpp-thd
