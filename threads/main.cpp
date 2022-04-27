@@ -54,6 +54,8 @@ public:
 
 int main()
 {
+    std::cout << "No of cores: " << std::thread::hardware_concurrency() << std::endl;
+
     std::cout << "Main thread starts..." << std::endl;
     const std::string text = "Hello Threads";
 
@@ -71,11 +73,19 @@ int main()
 
     //text.at(100);
     
-    thd_2.join();
-    thd_3.join();
+    std::vector<std::thread> thds;
+    thds.push_back(std::move(thd_2));
+    thds.push_back(std::move(thd_3));
+    thds.push_back(std::move(thd_5));
+
     thd_4.detach();
     assert(thd_4.joinable() == false);
-    thd_5.join();
+    
+    for(auto& thd : thds)
+    {
+        if (thd.joinable())
+            thd.join();
+    }
 
     std::cout << "Main thread ends..." << std::endl;
 }
