@@ -3,6 +3,7 @@ string(REPLACE " " "_" ProjectId ${PROJECT_NAME_STR})
 
 cmake_minimum_required(VERSION 3.15)
 project(${PROJECT_NAME_STR})
+set(CMAKE_BUILD_TYPE "Release") 
 
 #----------------------------------------
 # set compiler
@@ -31,4 +32,4 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} ${HEADERS_LIST})
 target_link_libraries(${PROJECT_NAME} Threads::Threads) 
 
 # Setting C++ standard
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
