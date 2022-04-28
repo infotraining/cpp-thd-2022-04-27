@@ -7,13 +7,15 @@
 #include <vector>
 #include <random>
 #include <numeric>
+#include <algorithm>
+#include <atomic>
 
 using namespace std::literals;
 
 class Data
 {
     std::vector<int> data_;
-    bool is_data_ready_{false};
+    std::atomic<bool> is_data_ready_{false};
 public:
     void produce()
     {
@@ -25,13 +27,19 @@ public:
         std::generate(data_.begin(), data_.end(), [&] { return rnd_distr(rnd_engine);});
         std::this_thread::sleep_for(2s);
         std::cout << "Data ready..." << std::endl;
+        
+        int x = 32;  
+        
+        /////////////////////
+        is_data_ready_.store(true, std::memory_order_relaxed); 
 
-        is_data_ready_ = true;
     }
 
     void consume(int id)
-    {
-        while(!is_data_ready_)
+    {    
+        int y = 665;
+
+        while(!is_data_ready_.load(std::memory_order_relaxed)) ////// MB
         {}
 
         int sum = std::accumulate(data_.begin(), data_.end(), 0);
@@ -55,5 +63,5 @@ int main()
     thd_consumer_1.join();
     thd_consumer_2.join();
 
-    std::cout << "Main thread ends..." << std::endl;
+    std::cout << "Main thread ends..." << std::endl;    
 }

@@ -58,20 +58,23 @@ struct Synchronized
 };
 
 
-// void countPi(long int countsPerThread, std::atomic<long>& hits)
-// {
-//     auto thd_id = std::this_thread::get_id();
-//     std::mt19937_64 rand_engine {std::hash<std::thread::id>()(thd_id)};
-//     std::uniform_real_distribution<double> rand_distr {0, 1.0};
+void countPi(long int countsPerThread, std::atomic<long>& hits)
+{
+    auto thd_id = std::this_thread::get_id();
+    std::mt19937_64 rand_engine {std::hash<std::thread::id>()(thd_id)};
+    std::uniform_real_distribution<double> rand_distr {0, 1.0};
 
-//     for (long n = 0; n < countsPerThread; ++n)
-//     {
-//         double x = rand_distr(rand_engine);
-//         double y = rand_distr(rand_engine);
-//         if (x * x + y * y < 1)
-//             hits.fetch_add(1, std::memory_order_seq_cst);
-//     }
-// }
+    for (long n = 0; n < countsPerThread; ++n)
+    {
+        double x = rand_distr(rand_engine);
+        double y = rand_distr(rand_engine);
+        if (x * x + y * y < 1)
+        {
+            //++hits;
+            hits.fetch_add(1, std::memory_order_relaxed);
+        }
+    }
+}
 
 void countPi(long int countsPerThread, Synchronized<long>& value)
 {
@@ -242,19 +245,19 @@ int main()
     //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
     // }
 
-    //////////////////////////////////////
-    // mutex
-    // multithreading thread
-    {
-        cout << "Pi calculation started (MT mutex)!" << endl;
-        const auto start = chrono::high_resolution_clock::now();
+    // //////////////////////////////////////
+    // // mutex
+    // // multithreading thread
+    // {
+    //     cout << "Pi calculation started (MT mutex)!" << endl;
+    //     const auto start = chrono::high_resolution_clock::now();
 
-        double pi = calc_pi_mutex(N);
+    //     double pi = calc_pi_mutex(N);
 
-        const auto end = chrono::high_resolution_clock::now();
-        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    //     const auto end = chrono::high_resolution_clock::now();
+    //     const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 
-        cout << "Pi = " << pi << endl;
-        cout << "Elapsed = " << elapsed_time << "ms" << endl;
-    }
+    //     cout << "Pi = " << pi << endl;
+    //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    // }
 }
