@@ -1,8 +1,8 @@
 # Szkolenie - Programowanie wielowątkowe w C++ #
 
-## LiveShare
+## Ankieta
 
-* https://prod.liveshare.vsengsaas.visualstudio.com/join?C5CD88F9B1FA59CC547B812C28FC964474F5
+* https://forms.gle/K2ZeWVy9u2VwpJcp9
 
 ## Dokumentacja + slajdy
 
