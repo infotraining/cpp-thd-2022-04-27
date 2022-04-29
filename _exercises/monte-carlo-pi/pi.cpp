@@ -7,6 +7,7 @@
 #include <random>
 #include <thread>
 #include <mutex>
+#include <future>
 using namespace std;
 
 namespace ver_1_0
@@ -152,40 +153,40 @@ double calc_pi_multithreading_with_padding(long N)
     return static_cast<double>(hits) / N * 4;
 }
 
-// double calc_pi_atomic(long N)
-// {
-//     auto num_of_threads = std::thread::hardware_concurrency();
-//     const long countsPerThread = static_cast<const long>(N / num_of_threads);
+double calc_pi_atomic(long N)
+{
+    auto num_of_threads = std::thread::hardware_concurrency();
+    const long countsPerThread = static_cast<const long>(N / num_of_threads);
 
-//     std::vector<std::thread> thrdVec;
+    std::vector<std::thread> threads;
 
-//     std::atomic<long> hits(0);
+    std::atomic<long> hits(0);
 
-//     for (int x = 0; x < num_of_threads; x++)
-//         thrdVec.push_back(std::move(std::thread(&countPi, countsPerThread, std::ref(hits))));
+    for (int x = 0; x < num_of_threads; x++)
+        threads.emplace_back([&] { countPi(countsPerThread, std::ref(hits)); });
 
-//     for (auto& ele : thrdVec)
-//         if (ele.joinable())
-//             ele.join();
+    for (auto& ele : threads)
+        if (ele.joinable())
+            ele.join();
 
-//     const double pi = static_cast<double>(hits) / N * 4;
+    const double pi = static_cast<double>(hits) / N * 4;
 
-//     return pi;
-// }
+    return pi;
+}
 
 double calc_pi_mutex(long N)
 {
     auto num_of_threads = std::thread::hardware_concurrency();
     const long countsPerThread = static_cast<const long>(N / num_of_threads);
 
-    std::vector<std::thread> thrdVec;
+    std::vector<std::thread> threads;
 
     Synchronized<long> hits{};
 
     for (int x = 0; x < num_of_threads; x++)
-        thrdVec.push_back(std::thread(&countPi, countsPerThread, std::ref(hits)));
+        threads.emplace_back([&]{ countPi(countsPerThread, std::ref(hits)); });
 
-    for (auto& ele : thrdVec)
+    for (auto& ele : threads)
         if (ele.joinable())
             ele.join();
 
@@ -194,70 +195,126 @@ double calc_pi_mutex(long N)
     return pi;
 }
 
+namespace fut
+{
+long run_calculation(long N) 
+{
+
+  auto thd_id = std::this_thread::get_id();
+  std::mt19937_64 rand_engine{std::hash<std::thread::id>()(thd_id)};
+  std::uniform_real_distribution<double> rand_distr{0, 1.0};
+
+  long result = 0;
+
+    for (long n = 0; n < N; ++n) {
+    double x = rand_distr(rand_engine);
+    double y = rand_distr(rand_engine);
+    if (x * x + y * y < 1)
+        result++;
+  }
+  return result;
+}
+
+double calc_pi_multithreading(long N)
+{
+    auto num_of_threads = std::thread::hardware_concurrency();
+    
+    std::vector<std::future<long>> futures;
+
+    for (int i = 0; i < num_of_threads; i++)
+    {
+        futures.push_back(std::async(&run_calculation, N / num_of_threads));
+    }
+
+    long result {0};
+
+    for (auto& fut : futures)
+    {
+        result += fut.get();
+    }
+
+    return static_cast<double>(result) / N * 4;
+}
+} // namespace fut
+
 int main()
 {
     const long N = 100'000'000;
 
-    // //////////////////////////////////////////////////////////////////////////////
-    // // single thread
-    // {
-    //     cout << "Pi calculation started (ST)!" << endl;
-    //     const auto start = chrono::high_resolution_clock::now();
+    //////////////////////////////////////////////////////////////////////////////
+    // single thread
+    {
+        cout << "Pi calculation started (ST)!" << endl;
+        const auto start = chrono::high_resolution_clock::now();
 
-    //     double pi = calc_pi_single_thread(N);
+        double pi = calc_pi_single_thread(N);
 
-    //     const auto end = chrono::high_resolution_clock::now();
-    //     const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        const auto end = chrono::high_resolution_clock::now();
+        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 
-    //     cout << "Pi = " << pi << endl;
-    //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
-    // }
+        cout << "Pi = " << pi << endl;
+        cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    }
 
-    // //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-    // //////////////////////////////////////////////////////////////////////////////
-    // // multithreading thread
-    // {
-    //     cout << "Pi calculation started (MT false sharing)!" << endl;
-    //     const auto start = chrono::high_resolution_clock::now();
+    //////////////////////////////////////////////////////////////////////////////
+    // multithreading thread
+    {
+        cout << "Pi calculation started (MT false sharing)!" << endl;
+        const auto start = chrono::high_resolution_clock::now();
 
-    //     double pi = calc_pi_multithreading(N);
+        double pi = calc_pi_multithreading(N);
 
-    //     const auto end = chrono::high_resolution_clock::now();
-    //     const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        const auto end = chrono::high_resolution_clock::now();
+        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 
-    //     cout << "Pi = " << pi << endl;
-    //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
-    // }
+        cout << "Pi = " << pi << endl;
+        cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    }
 
-    // //////////////////////////////////////////////////////////////////////////////
-    // // multithreading thread
-    // {
-    //     cout << "Pi calculation started (MT padding)!" << endl;
-    //     const auto start = chrono::high_resolution_clock::now();
+    //////////////////////////////////////////////////////////////////////////////
+    // multithreading thread
+    {
+        cout << "Pi calculation started (MT padding)!" << endl;
+        const auto start = chrono::high_resolution_clock::now();
 
-    //     double pi = calc_pi_multithreading_with_padding(N);
+        double pi = calc_pi_multithreading_with_padding(N);
 
-    //     const auto end = chrono::high_resolution_clock::now();
-    //     const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        const auto end = chrono::high_resolution_clock::now();
+        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 
-    //     cout << "Pi = " << pi << endl;
-    //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
-    // }
+        cout << "Pi = " << pi << endl;
+        cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    }
 
-    // //////////////////////////////////////
-    // // mutex
-    // // multithreading thread
-    // {
-    //     cout << "Pi calculation started (MT mutex)!" << endl;
-    //     const auto start = chrono::high_resolution_clock::now();
+    //////////////////////////////////////
+    // mutex
+    {
+        cout << "Pi calculation started (MT mutex)!" << endl;
+        const auto start = chrono::high_resolution_clock::now();
 
-    //     double pi = calc_pi_mutex(N);
+        double pi = calc_pi_mutex(N);
 
-    //     const auto end = chrono::high_resolution_clock::now();
-    //     const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        const auto end = chrono::high_resolution_clock::now();
+        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 
-    //     cout << "Pi = " << pi << endl;
-    //     cout << "Elapsed = " << elapsed_time << "ms" << endl;
-    // }
+        cout << "Pi = " << pi << endl;
+        cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    }
+
+         //////////////////////////////////////////////////////////////////////////////
+    // future multithreading thread
+    {
+        std::cout << "Pi calculation started (future)!" << endl;
+        const auto start = chrono::high_resolution_clock::now();
+
+        double pi = fut::calc_pi_multithreading(N);
+
+        const auto end = chrono::high_resolution_clock::now();
+        const auto elapsed_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        std::cout << "Pi = " << pi << endl;
+        std::cout << "Elapsed = " << elapsed_time << "ms" << endl;
+    }  
 }

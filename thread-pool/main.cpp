@@ -8,6 +8,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <random>
+#include <future>
+#include <tuple>
 
 using namespace std::literals;
 
@@ -54,12 +57,19 @@ public:
         }
     }
 
-    void submit(const Task& task)
-    {
-        if (!task)
-            throw std::invalid_argument("Empty function is not allowed");
 
-        queue_tasks_.push(task);
+    template <typename Callable>
+    auto submit(Callable&& task)
+    {
+        // if (!task)
+        //     throw std::invalid_argument("Empty function is not allowed");
+
+        using ResultT = decltype(task());
+        auto pt = std::make_shared<std::packaged_task<ResultT()>>(std::forward<Callable>(task));
+        auto f = pt->get_future();
+                
+        queue_tasks_.push([pt] { (*pt)(); });
+        return f;
     }
 
 private:
@@ -137,11 +147,45 @@ namespace ver_1_1
     };
 }
 
+int calculate_square(int x)
+{
+    std::cout << "Starting calculation for " << x << " in " << std::this_thread::get_id() << std::endl;
+
+    std::random_device rd;
+    std::uniform_int_distribution<> distr(100, 5000);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(distr(rd)));
+
+    if (x % 3 == 0)
+        throw std::runtime_error("Error#3");
+
+    return x * x;
+}
+
 int main()
 {
-    ver_1_1::ThreadPool thd_pool {6};
+    ThreadPool thd_pool {6};
 
     for (int i = 1; i < 20; ++i)
         thd_pool.submit([=]
             { background_work(i, "Thread Pool#" + std::to_string(i), 100ms); });
+
+    std::vector<std::tuple<int, std::future<int>>> f_squares;
+
+    for (int i = 1; i < 20; ++i)
+        f_squares.push_back(std::tuple(i, thd_pool.submit([i] { return calculate_square(i); })));
+
+
+    for(auto& [i, fs]  : f_squares)
+    {
+        try
+        {            
+            int result = fs.get();
+            std::cout << i << "*" << i << " = " << result << std::endl;
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }        
+    }
 }
