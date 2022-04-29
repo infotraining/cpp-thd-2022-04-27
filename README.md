@@ -4,6 +4,12 @@
 
 * https://forms.gle/K2ZeWVy9u2VwpJcp9
 
+## Linki
+
+* Folly - https://github.com/facebook/folly
+* Abseil - https://abseil.io/
+* C++11 atomic - mappings to CPU - https://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
+
 ## Dokumentacja + slajdy
 
 * https://infotraining.bitbucket.io/cpp-thd
