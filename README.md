@@ -1,8 +1,14 @@
 # Szkolenie - Programowanie wielowątkowe w C++ #
 
-## LiveShare
+## Ankieta
 
-* https://prod.liveshare.vsengsaas.visualstudio.com/join?C5CD88F9B1FA59CC547B812C28FC964474F5
+* https://forms.gle/K2ZeWVy9u2VwpJcp9
+
+## Linki
+
+* Folly - https://github.com/facebook/folly
+* Abseil - https://abseil.io/
+* C++11 atomic - mappings to CPU - https://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
 
 ## Dokumentacja + slajdy
 
